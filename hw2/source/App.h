@@ -21,6 +21,8 @@ Array<float> g_currentAudioBuffer;
 class App : public GApp {
 protected:
     RtAudio m_rtAudio;
+    float m_waveformWidth;
+
 
     struct AudioSettings {
       int numChannels;
@@ -29,14 +31,14 @@ protected:
       
       AudioSettings() :
         numChannels(1),
-	  sampleRate(44100),
+	  sampleRate(48000),
 	rtAudioFormat(RTAUDIO_FLOAT32)
       {}
     } m_audioSettings;
 
     shared_ptr<Texture> m_rawAudioTexture;
-    
 
+    shared_ptr<Texture> m_frequencyAudioTexture;
 
     void initializeAudio();
 public:

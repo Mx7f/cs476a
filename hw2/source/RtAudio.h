@@ -44,7 +44,9 @@
 
 #ifndef __RTAUDIO_H
 #define __RTAUDIO_H
+#ifdef _MSC_VER 
 #   define __WINDOWS_DS__
+#endif
 #define RTAUDIO_VERSION "4.1.1"
 
 #include <string>

@@ -1,6 +1,8 @@
 /** \file App.cpp */
 #include "App.h"
 
+#include "chuck_fft.h"
+
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
 G3D_START_AT_MAIN();
 
@@ -12,6 +14,8 @@ int main(int argc, const char* argv[]) {
     // settings class.  For example:
     settings.window.width       = 1280; 
     settings.window.height      = 720;
+    settings.window.asynchronous = false;
+
 
     return App(settings).run();
 }
@@ -51,6 +55,53 @@ void App::initializeAudio() {
     debugPrintf("No audio devices found!\n");
     exit( 1 );
   }
+  RtAudio::DeviceInfo info;
+
+  unsigned int devices = m_rtAudio.getDeviceCount();
+  std::cout << "\nFound " << devices << " device(s) ...\n";
+
+  for (unsigned int i=0; i<devices; i++) {
+    info = m_rtAudio.getDeviceInfo(i);
+
+    std::cout << "\nDevice Name = " << info.name << '\n';
+    if ( info.probed == false )
+      std::cout << "Probe Status = UNsuccessful\n";
+    else {
+      std::cout << "Probe Status = Successful\n";
+      std::cout << "Output Channels = " << info.outputChannels << '\n';
+      std::cout << "Input Channels = " << info.inputChannels << '\n';
+      std::cout << "Duplex Channels = " << info.duplexChannels << '\n';
+      if ( info.isDefaultOutput ) std::cout << "This is the default output device.\n";
+      else std::cout << "This is NOT the default output device.\n";
+      if ( info.isDefaultInput ) std::cout << "This is the default input device.\n";
+      else std::cout << "This is NOT the default input device.\n";
+      if ( info.nativeFormats == 0 )
+	std::cout << "No natively supported data formats(?)!";
+      else {
+	std::cout << "Natively supported data formats:\n";
+        if ( info.nativeFormats & RTAUDIO_SINT8 )
+	  std::cout << "  8-bit int\n";
+        if ( info.nativeFormats & RTAUDIO_SINT16 )
+	  std::cout << "  16-bit int\n";
+        if ( info.nativeFormats & RTAUDIO_SINT24 )
+	  std::cout << "  24-bit int\n";
+        if ( info.nativeFormats & RTAUDIO_SINT32 )
+	  std::cout << "  32-bit int\n";
+        if ( info.nativeFormats & RTAUDIO_FLOAT32 )
+	  std::cout << "  32-bit float\n";
+        if ( info.nativeFormats & RTAUDIO_FLOAT64 )
+	  std::cout << "  64-bit float\n";
+      }
+      if ( info.sampleRates.size() < 1 )
+	std::cout << "No supported sample rates found!";
+      else {
+	std::cout << "Supported sample rates = ";
+        for (unsigned int j=0; j<info.sampleRates.size(); j++)
+	  std::cout << info.sampleRates[j] << " ";
+      }
+      std::cout << std::endl;
+    }
+  }
 
   // Let RtAudio print messages to stderr.
   m_rtAudio.showWarnings( true );
@@ -84,8 +135,13 @@ void App::initializeAudio() {
 void App::onInit() {
     GApp::onInit();
 
+
+    m_waveformWidth = 8.0f;
     initializeAudio();
     m_rawAudioTexture = Texture::createEmpty("Raw Audio Texture", g_currentAudioBuffer.size(), 1, ImageFormat::R32F());
+
+    m_frequencyAudioTexture = Texture::createEmpty("Frequency Audio Texture", g_currentAudioBuffer.size()/2, 1, ImageFormat::R32F());
+
 
     // Turn on the developer HUD
     createDeveloperHUD();
@@ -93,6 +149,7 @@ void App::onInit() {
     developerWindow->setVisible(true);
     developerWindow->cameraControlWindow->setVisible(false);
     showRenderingStats = false;
+
 }
 
 
@@ -115,6 +172,16 @@ bool App::onEvent(const GEvent& e) {
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface3D) {
   shared_ptr<CPUPixelTransferBuffer> ptb = CPUPixelTransferBuffer::fromData(g_currentAudioBuffer.size(), 1, ImageFormat::R32F(), g_currentAudioBuffer.getCArray());
   m_rawAudioTexture->update(ptb);
+  Array<complex> frequency;
+  frequency.resize(g_currentAudioBuffer.size()/2);
+  memcpy(frequency.getCArray(), g_currentAudioBuffer.getCArray(), sizeof(float)*2*frequency.size());
+  rfft( (float*)frequency.getCArray(), frequency.size(), FFT_FORWARD );
+  Array<float> frequencyMagnitude;
+  for ( auto c : frequency ) {
+    frequencyMagnitude.append(sqrt(cmp_abs(c)));
+  }
+    shared_ptr<CPUPixelTransferBuffer> freqMagnitudePTB = CPUPixelTransferBuffer::fromData(frequencyMagnitude.size(), 1, ImageFormat::R32F(), frequencyMagnitude.getCArray());
+    m_frequencyAudioTexture->update(freqMagnitudePTB);
 
     debugAssertGLOk();
     rd->swapBuffers();
@@ -130,19 +197,28 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface3D)
       LAUNCH_SHADER("rawAudioVisualize.pix", args);
     } rd->pop2D();
 
-    {
-        Args args;
-        args.setUniform("color", Color3::green());
-        args.setUniform("waveformWidth", 10.0f);
-        m_rawAudioTexture->setShaderArgs(args, "rawAudio_", Sampler::video());
-        args.setPrimitiveType(PrimitiveType::LINE_STRIP);
-        args.setNumIndices(m_rawAudioTexture->width());
-        LAUNCH_SHADER("visualizeLines.*", args);
-    }
+    rd->pushState(m_framebuffer); {
+      rd->setColorClearValue(Color3::black());
+        rd->clear();
+        rd->setProjectionAndCameraMatrix(activeCamera()->projection(), activeCamera()->frame());
+	auto drawLineGraph = [&](Color3 color, float yOffset, shared_ptr<Texture> samplesOverTime) {
+	  Args args;
+	  args.setUniform("color", color);
+	  args.setUniform("waveformWidth", m_waveformWidth);
+	  args.setUniform("yOffset", yOffset);
+	  samplesOverTime->setShaderArgs(args, "rawAudio_", Sampler::video());
+	  args.setPrimitiveType(PrimitiveType::LINE_STRIP);
+	  args.setNumIndices(samplesOverTime->width());
+	  LAUNCH_SHADER("visualizeLines.*", args);
+	};
+	drawLineGraph(Color3::green(), 1.2f, m_rawAudioTexture);
+	drawLineGraph(Color3::blue(), -1.2f, m_frequencyAudioTexture);
+    } rd->popState();
 
     //    Draw::axes(CoordinateFrame(Vector3(0, 0, 0)), rd);
     debugAssertGLOk();
-
+    activeCamera()->filmSettings().setAntialiasingEnabled(false);
+    m_film->exposeAndRender(rd, activeCamera()->filmSettings(), m_framebuffer->texture(0));
     // Call to make the GApp show the output of debugDraw
     drawDebugShapes();
     debugAssertGLOk();
