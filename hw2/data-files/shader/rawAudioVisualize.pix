@@ -1,0 +1,10 @@
+#version 330 // -*- c++ -*-
+
+#include <compatibility.glsl>
+#include <Texture/Texture.glsl>
+
+uniform_Texture(sampler2D
+
+void main() {
+  vec2 ssC = gl_FragCoord.xy * ;
+}
