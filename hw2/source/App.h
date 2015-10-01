@@ -10,9 +10,11 @@
 
 #include <G3D/G3DAll.h>
 
+// Compile RtAudio with windows direct sound support
+#ifdef G3D_WINDOWS
+#   define __WINDOWS_DS__
+#endif
 #include "RtAudio.h"
-
-
 
 Array<float> g_currentAudioBuffer;
 

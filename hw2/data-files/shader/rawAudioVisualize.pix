@@ -1,10 +1,17 @@
 #version 330 // -*- c++ -*-
 
 #include <compatibility.glsl>
+#include <g3dmath.glsl>
 #include <Texture/Texture.glsl>
 
-uniform_Texture(sampler2D
+uniform_Texture(sampler2D, rawAudio_);
+
+uniform float invScreenWidth;
+
+out float4 result;
 
 void main() {
-  vec2 ssC = gl_FragCoord.xy * ;
+    float audioSample = texture(rawAudio_buffer, vec2(gl_FragCoord.x * invScreenWidth, 0.5)).r;
+    float s = audioSample * 0.5 + 0.5;
+    result = float4(s, s, s, 1.0);
 }

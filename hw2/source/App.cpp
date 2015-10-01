@@ -48,7 +48,7 @@ void App::initializeAudio() {
   // Check for audio devices
   if( m_rtAudio.getDeviceCount() < 1 ) {
     // None :(
-    std::cout << "No audio devices found!" << std::endl;
+    debugPrintf("No audio devices found!\n");
     exit( 1 );
   }
 
@@ -124,10 +124,21 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface3D)
     
     rd->push2D(); {
       Args args;
-      m_rawAudioTexture->setShaderArgs(args, "rawAudioTexture", Sampler::video());
+      args.setUniform("invScreenWidth", 1.0f / rd->viewport().width());
+      m_rawAudioTexture->setShaderArgs(args, "rawAudio_", Sampler::video());
       args.setRect(rd->viewport());
       LAUNCH_SHADER("rawAudioVisualize.pix", args);
     } rd->pop2D();
+
+    {
+        Args args;
+        args.setUniform("color", Color3::green());
+        args.setUniform("waveformWidth", 10.0f);
+        m_rawAudioTexture->setShaderArgs(args, "rawAudio_", Sampler::video());
+        args.setPrimitiveType(PrimitiveType::LINE_STRIP);
+        args.setNumIndices(m_rawAudioTexture->width());
+        LAUNCH_SHADER("visualizeLines.*", args);
+    }
 
     //    Draw::axes(CoordinateFrame(Vector3(0, 0, 0)), rd);
     debugAssertGLOk();
