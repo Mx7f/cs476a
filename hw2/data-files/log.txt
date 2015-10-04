@@ -1,13 +1,13 @@
 Application Log
-Start: Wed Sep 30 22:35:18 2015
+Start: Sat Oct  3 17:20:40 2015
 
-Initializing System::findDataFile took 0.000543s
+Initializing System::findDataFile took 0.000573s
 WARNING: AudioDevice is not enabled. Set G3DSpecification::audio = true before invoking initGLG3D() to enable audio.
 
 Entering GApp::GApp()
 cwd = /Users/michaelmara/cs476a/hw2/data-files
 System::setAppDataDir("/Users/michaelmara/cs476a/hw2/build/")
-Initializing System::findDataFile took 0.000473s
+Initializing System::findDataFile took 0.000438s
 Setting video mode
 Setting initial rendering state.
 Done setting initial state.
@@ -169,8 +169,8 @@ System = {
         Driver = "Unknown;"
         OpenGL version = "4.1 NVIDIA-10.4.2 310.41.35f01;"
         Textures = 16 ;
-        Texture coordinates = 277139168 ;
-        Texture units = 277139168 ;
+        Texture coordinates = 256261888 ;
+        Texture units = 256261888 ;
         GL_MAX_TEXTURE_SIZE = 16384 ;
         GL_MAX_CUBE_MAP_TEXTURE_SIZE = 16384 ;
         GL_MAX_COLOR_ATTACHMENTS = 8 ;

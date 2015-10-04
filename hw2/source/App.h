@@ -15,6 +15,7 @@
 #   define __WINDOWS_DS__
 #endif
 #include "RtAudio.h"
+#include "chuck_fft.h"
 
 Array<float> g_currentAudioBuffer;
 
@@ -36,9 +37,18 @@ protected:
       {}
     } m_audioSettings;
 
+    int m_maxSavedTimeSlices;
+
+    Array<float> m_cpuRawAudioData;
+    Array<complex> m_cpuFrequencyAudioData;
+
     shared_ptr<Texture> m_rawAudioTexture;
 
     shared_ptr<Texture> m_frequencyAudioTexture;
+
+    void setAudioShaderArgs(Args& args);
+
+    void drawLineGraphFromRawSamples(RenderDevice* rd);
 
     void initializeAudio();
 public:
