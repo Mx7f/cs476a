@@ -88,10 +88,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h" />
+    <ClInclude Include="source\chuck_fft.h" />
     <ClInclude Include="source\RtAudio.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\App.cpp" />
+    <ClCompile Include="source\chuck_fft.c" />
     <ClCompile Include="source\RtAudio.cpp" />
   </ItemGroup>
   <ItemGroup>
