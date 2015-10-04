@@ -1,8 +1,6 @@
 /** \file App.cpp */
 #include "App.h"
 
-#include "chuck_fft.h"
-
 // Tells C++ to invoke command-line main() function even on OS X and Win32.
 G3D_START_AT_MAIN();
 
@@ -135,12 +133,12 @@ void App::initializeAudio() {
 void App::onInit() {
     GApp::onInit();
 
-
+    m_maxSavedTimeSlices = 512;
     m_waveformWidth = 8.0f;
     initializeAudio();
     m_rawAudioTexture = Texture::createEmpty("Raw Audio Texture", g_currentAudioBuffer.size(), 1, ImageFormat::R32F());
 
-    m_frequencyAudioTexture = Texture::createEmpty("Frequency Audio Texture", g_currentAudioBuffer.size()/2, 1, ImageFormat::R32F());
+    m_frequencyAudioTexture = Texture::createEmpty("Frequency Audio Texture", g_currentAudioBuffer.size()/2, 1, ImageFormat::RG32F());
 
 
     // Turn on the developer HUD
@@ -168,20 +166,60 @@ bool App::onEvent(const GEvent& e) {
     return false;
 }
 
+void App::setAudioShaderArgs(Args& args) {
+   m_rawAudioTexture->setShaderArgs(args, "rawAudio_", Sampler::video());
+   m_frequencyAudioTexture->setShaderArgs(args, "frequencyAudio_", Sampler::video());
+}
+
+void App::drawLineGraphFromRawSamples(RenderDevice* rd) {
+  Color3 color = Color3::green();
+  float yOffset = 1.2f;
+  Args args;
+  args.setUniform("color", color);
+  args.setUniform("waveformWidth", m_waveformWidth);
+  args.setUniform("yOffset", yOffset);
+  setAudioShaderArgs(args);
+  args.setPrimitiveType(PrimitiveType::LINE_STRIP);
+  args.setNumIndices(m_rawAudioTexture->width());
+  LAUNCH_SHADER("visualizeLines.*", args);
+}
+
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface3D) {
-  shared_ptr<CPUPixelTransferBuffer> ptb = CPUPixelTransferBuffer::fromData(g_currentAudioBuffer.size(), 1, ImageFormat::R32F(), g_currentAudioBuffer.getCArray());
+  int sampleCount = g_currentAudioBuffer.size();
+  int freqCount = sampleCount/2;
+  m_cpuRawAudioData.appendPOD(g_currentAudioBuffer);
+
+  int numStoredTimeSlices = m_cpuRawAudioData.size()/sampleCount;  
+  shared_ptr<CPUPixelTransferBuffer> ptb = CPUPixelTransferBuffer::fromData(sampleCount, numStoredTimeSlices, ImageFormat::R32F(), m_cpuRawAudioData.getCArray());
+  m_rawAudioTexture->resize(sampleCount, numStoredTimeSlices);
   m_rawAudioTexture->update(ptb);
+
   Array<complex> frequency;
-  frequency.resize(g_currentAudioBuffer.size()/2);
-  memcpy(frequency.getCArray(), g_currentAudioBuffer.getCArray(), sizeof(float)*2*frequency.size());
+  frequency.resize(freqCount);
+  float* currentRawAudioDataPtr = m_cpuRawAudioData.getCArray() + (m_cpuRawAudioData.size() - sampleCount);
+  memcpy(frequency.getCArray(), currentRawAudioDataPtr, sizeof(float)*sampleCount);
   rfft( (float*)frequency.getCArray(), frequency.size(), FFT_FORWARD );
-  Array<float> frequencyMagnitude;
-  for ( auto c : frequency ) {
-    frequencyMagnitude.append(sqrt(cmp_abs(c)));
-  }
-    shared_ptr<CPUPixelTransferBuffer> freqMagnitudePTB = CPUPixelTransferBuffer::fromData(frequencyMagnitude.size(), 1, ImageFormat::R32F(), frequencyMagnitude.getCArray());
-    m_frequencyAudioTexture->update(freqMagnitudePTB);
+  m_cpuFrequencyAudioData.appendPOD(frequency);
+  
+  shared_ptr<CPUPixelTransferBuffer> freqPTB = CPUPixelTransferBuffer::fromData(freqCount, numStoredTimeSlices, ImageFormat::RG32F(), m_cpuFrequencyAudioData.getCArray());
+
+    m_frequencyAudioTexture->resize(freqCount, numStoredTimeSlices);
+    m_frequencyAudioTexture->update(freqPTB);
+    
+    if (numStoredTimeSlices == m_maxSavedTimeSlices) {
+      int newTotalSampleCount = sampleCount*(numStoredTimeSlices-1);
+      int newTotalFrequencyCount = (sampleCount/2)*(numStoredTimeSlices-1);
+      for (int i = 0; i < newTotalSampleCount; ++i) {
+	m_cpuRawAudioData[i] = m_cpuRawAudioData[i+sampleCount];
+      }
+      m_cpuRawAudioData.resize(newTotalSampleCount);
+      for (int i = 0; i < newTotalFrequencyCount; ++i) {
+	m_cpuFrequencyAudioData[i] = m_cpuFrequencyAudioData[i+freqCount];
+      }
+      m_cpuFrequencyAudioData.resize(newTotalFrequencyCount);
+    }
+
 
     debugAssertGLOk();
     rd->swapBuffers();
@@ -201,18 +239,9 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& surface3D)
       rd->setColorClearValue(Color3::black());
         rd->clear();
         rd->setProjectionAndCameraMatrix(activeCamera()->projection(), activeCamera()->frame());
-	auto drawLineGraph = [&](Color3 color, float yOffset, shared_ptr<Texture> samplesOverTime) {
-	  Args args;
-	  args.setUniform("color", color);
-	  args.setUniform("waveformWidth", m_waveformWidth);
-	  args.setUniform("yOffset", yOffset);
-	  samplesOverTime->setShaderArgs(args, "rawAudio_", Sampler::video());
-	  args.setPrimitiveType(PrimitiveType::LINE_STRIP);
-	  args.setNumIndices(samplesOverTime->width());
-	  LAUNCH_SHADER("visualizeLines.*", args);
-	};
-	drawLineGraph(Color3::green(), 1.2f, m_rawAudioTexture);
-	drawLineGraph(Color3::blue(), -1.2f, m_frequencyAudioTexture);
+
+	drawLineGraphFromRawSamples(rd);
+	//	drawLineGraph(Color3::blue(), -1.2f, m_frequencyAudioTexture);
     } rd->popState();
 
     //    Draw::axes(CoordinateFrame(Vector3(0, 0, 0)), rd);

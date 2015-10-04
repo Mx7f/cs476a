@@ -10,7 +10,7 @@ uniform float yOffset;
 
 uniform float waveformWidth;
 void main() {
-    float audioSample = texelFetch(rawAudio_buffer, ivec2(gl_VertexID,0), 0).r;
+  float audioSample = texelFetch(rawAudio_buffer, ivec2(gl_VertexID, int(rawAudio_size.y) - 1), 0).r;
     float alpha = gl_VertexID / (rawAudio_size.x - 1.0);
     float x = (alpha*2.0 - 1.0) * waveformWidth*0.5;
     gl_Position = g3d_ProjectionMatrix * vec4(g3d_WorldToCameraMatrix * vec4(x, audioSample + yOffset, 0.0, 1.0), 1.0);
