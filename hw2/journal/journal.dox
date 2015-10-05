@@ -6,6 +6,42 @@
 
 <i>Newest entries are at the top</i>
 
+\section S20151004 2015-10-04: Frequency Visualization
+
+\thumbnail{2015-10-04_003_MusicVisualizer_g3d_r320__Added_a_Waterfall.jpg, Added a Waterfall}
+
+Since I already had the full history texture I just set up instanced rendering and set the Z coordinate of the frequency points to depend on their gl_InstanceID, it was a 3 line of code change!
+
+
+
+\thumbnail{2015-10-04_002_MusicVisualizer_g3d_r320__First_attempt_at_frequency_visualization.jpg, First attempt at frequency visualization}
+
+I am using basically the same shader as for the waveform visualization, but I compute the magnitude of the frequency directly in the shader and then transform it by a sqrt so it doesn't look quite so flat. And boy is bloom awesome :)
+
+\section S20151004 2015-10-04: Planning for the future
+
+\thumbnail{2015-10-04_001_MusicVisualizer_g3d_r320__Audio_Frequency_Texture.jpg, Audio Frequency Texture}
+
+In order to replicate sndpeek's frequency visualizer, I integrated Chuck's FFT code. At every time slice I now shunt the data through the real FFT, and upload the data into a full history texture (like the raw audio data) where each row is a single time slice. The red channel in this visualization represents the real component, and the green represents the imaginary component of each of the output complex numbers from the FFT. I am not quite sure if I am doing everything correctly on the audio processing side, but it closely resembles sndpeek's output, so I will proceed with visualization.
+
+
+
+\thumbnail{2015-10-04_000_MusicVisualizer_g3d_r320__The_raw_audio_sample_texture_with_512_time_slices_of_history_.jpg, The raw audio sample texture with 512 time slices of history.}
+
+I have many ideas floating around in my head for what I want the music visualizer to be; so I want to be able to test each one quickly. My thought is that the best way to do that is to generate all of the data I could possibly want, and upload it to the GPU in a texture, then its super easy to access (and since G3D supports hot-reloading of shaders, it will be very quick to iterate on several shader variations). So I thought that I will likely want a lengthy history of the waveform for cool temporal effects, so I keep track of the last 512 time slices worth of raw audio data. I also modified the waveform visualization shader to read the proper row of data, so it remains visually the same.
+
+\section S20151003 2015-10-03: Loading Audio and Uploading to the GPU
+
+\thumbnail{2015-10-03_003_MusicVisualizer_g3d_r323__Reproducing_waveform_visualizer_from_sndpeek_.jpg, Reproducing waveform visualizer from sndpeek.}
+
+Since we have the audio data in texture, it's straightforward to reproduce sndpeek's audio visualizer. I simply start a shader pass with no vertex attributes, with the primitive type of LINE_STRIP, and make the number of vertices equal to the number of samples. Then I use the vertex shader to position the vertices, using gl_VertexID to choose the texel to sample from the audio texture, which in turn determines the y coordinate (which is in the range -1 to 1). The x coordinate is just gl_VertexID/(numAudioSample-1)*c - (c/2) for a constant c (which determines the x extent of the entire wave, I tuned it so that the default camera position just barely sees the entire wave). The z coordinate is 0. The pixel shader just outputs green, and then I run G3D's full post-process pipeline. I turned off screen-space anti-aliasing, since it interacts poorly with 1-pixel features. I cranked up bloom to get the cool looking glowing effect.
+
+
+
+\thumbnail{2015-10-03_002_MusicVisualizer_g3d_r323__Portion_of_audio_data_visualized__zoomed_in_so_its_easy_to_see__The_smooth_gradient_is_from_whistling_.jpg, Portion of audio data visualized; zoomed in so its easy to see. The smooth gradient is from whistling.}
+
+I successfully integrate RtAudio into a simple G3D application. Every render frame I take the current audio data and upload it to a (numSamples x 1) floating point texture, which I am visualizing using G3D's slick texture viewer, zoomed in a bit so its easy to see the smooth gradient caused by whistling.
+
 \section notes Formatting Notes
 Put the newest entry at the top of this file, like a blog. 
 Begin the title of each section with a date in ISO format (YYYY-MM-DD).

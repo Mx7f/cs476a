@@ -21,6 +21,10 @@ Array<float> g_currentAudioBuffer;
 
 class App : public GApp {
 protected:
+
+    G3D_DECLARE_ENUM_CLASS(VisualizationMode, SNDPEEK_ALIKE, PARTICLES);
+    VisualizationMode m_visualizationMode;
+
     RtAudio m_rtAudio;
     float m_waveformWidth;
 
@@ -50,7 +54,17 @@ protected:
 
     void drawLineGraphFromRawSamples(RenderDevice* rd);
 
+    void drawLineGraphFromFrequencyMagnitude(RenderDevice* rd);
+
     void initializeAudio();
+
+    /** Called from onInit */
+    void makeGUI();
+
+    /** Called once a frame to get the latest audio data and compute statistics */
+    void updateAudioData();
+
+
 public:
 
     App(const GApp::Settings& settings = GApp::Settings());
@@ -61,6 +75,10 @@ public:
 
     virtual bool onEvent(const GEvent& e) override;
     virtual void onCleanup() override;
+
+    virtual void onUserInput(UserInput* ui) override;
+
+    virtual void onSimulation(RealTime rdt, SimTime sdt, SimTime idt) override;
 
 };
 

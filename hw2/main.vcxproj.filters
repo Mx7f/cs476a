@@ -21,19 +21,31 @@
     <ClInclude Include="source\chuck_fft.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\AudioParticleSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="mainpage.dox" />
     <None Include="Doxyfile" />
     <None Include="journal\journal.dox" />
-    <None Include="data-files\shader\rawAudioVisualize.pix">
-      <Filter>Shader Files</Filter>
-    </None>
     <None Include="data-files\shader\visualizeLines.pix">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="data-files\shader\visualizeLines.vrt">
       <Filter>Shader Files</Filter>
+    </None>
+    <None Include="data-files\shader\flatColor.pix">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="data-files\shader\visualizeFrequencyMagnitude.vrt">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="data-files\shader\visualizeFrequencyMagnitude.pix">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="data-files\scene\visualizer.Scene.Any">
+      <Filter>Scene Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
