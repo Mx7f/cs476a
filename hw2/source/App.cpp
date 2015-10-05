@@ -138,6 +138,9 @@ void App::initializeAudio() {
 void App::onInit() {
     GApp::onInit();
 
+    m_shadertoyShaderIndex = 0;
+    m_shadertoyShaders.append("sunShader.pix", "cubescape.pix", "fractalLand.pix");
+
     m_maxSavedTimeSlices = 512;
     m_waveformWidth = 7.9f;
     initializeAudio();
@@ -154,12 +157,12 @@ void App::makeGUI() {
     createDeveloperHUD();
     debugWindow->setVisible(true);
     developerWindow->videoRecordDialog->setEnabled(true);
-
-    GuiPane* infoPane = debugPane->addPane("Info", GuiTheme::ORNATE_PANE_STYLE);
-
-    // Example of how to add debugging controls
-    infoPane->addEnumClassRadioButtons<VisualizationMode>("Mode", &m_visualizationMode);
-    infoPane->pack();
+    debugPane->beginRow(); {
+        debugPane->addEnumClassRadioButtons<VisualizationMode>("Mode", &m_visualizationMode);
+    } debugPane->endRow();
+    GuiDropDownList* list = debugPane->addDropDownList("Shadertoy Shader", m_shadertoyShaders, &m_shadertoyShaderIndex);
+    list->setCaptionWidth(100);
+    debugPane->pack();
 
 
     debugWindow->pack();
@@ -270,11 +273,12 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
     debugAssertGLOk();
     rd->clear();
     debugAssertGLOk();
-    
+    FilmSettings filmSettings = activeCamera()->filmSettings();
 
 
     switch (m_visualizationMode) {
     case VisualizationMode::SNDPEEK_ALIKE:
+        filmSettings.setAntialiasingEnabled(false);
         rd->pushState(m_framebuffer); {
             rd->setColorClearValue(Color3::black());
             rd->clear();
@@ -293,14 +297,32 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
         m_renderer->render(rd, m_framebuffer, m_depthPeelFramebuffer, scene()->lightingEnvironment(), m_gbuffer, allSurfaces);
 
         break;
+    case VisualizationMode::SHADERTOY:
+        filmSettings.setBloomStrength(0.0f);
+        rd->push2D(m_framebuffer); {
+            rd->setColorClearValue(Color3::black());
+            rd->clear();
+            
+            Args args;
+            args.setUniform("iResolution", rd->viewport().wh());
+            args.setUniform("iGlobalTime", scene()->time());
+            
+            setAudioShaderArgs(args);
+            args.setRect(rd->viewport());
+            
+            const shared_ptr<G3D::Shader> theShader = G3D::Shader::getShaderFromPattern(m_shadertoyShaders[m_shadertoyShaderIndex]);
+	        G3D::RenderDevice::current->apply(theShader, args);
+        } rd->pop2D();
+        
+        break;
     }
 	    
 
 
     //    Draw::axes(CoordinateFrame(Vector3(0, 0, 0)), rd);
     debugAssertGLOk();
-    activeCamera()->filmSettings().setAntialiasingEnabled(false);
-    m_film->exposeAndRender(rd, activeCamera()->filmSettings(), m_framebuffer->texture(0));
+    
+    m_film->exposeAndRender(rd, filmSettings, m_framebuffer->texture(0));
     // Call to make the GApp show the output of debugDraw
     drawDebugShapes();
     debugAssertGLOk();

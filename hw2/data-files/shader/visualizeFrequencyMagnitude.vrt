@@ -1,0 +1,34 @@
+#version 330 // -*- c++ -*-
+
+#include <compatibility.glsl>
+#include <g3dmath.glsl>
+#include <Texture/Texture.glsl>
+
+#define complex vec2
+
+uniform_Texture(sampler2D, frequencyAudio_);
+
+uniform float yOffset;
+
+uniform float waveformWidth;
+
+uniform float numTimeSlices;
+
+out float colorAlpha;
+
+void main() {
+    complex frequency = texelFetch(frequencyAudio_buffer, ivec2(gl_VertexID, int(frequencyAudio_size.y) - gl_InstanceID - 1), 0).rg;
+    
+    float zAlpha = (gl_InstanceID / (numTimeSlices - 1.0));
+    float z = pow(zAlpha, 1.0) * (-10.0);
+    colorAlpha = pow(1.0 - zAlpha, 2.0);
+    if (gl_InstanceID == 0) {
+        colorAlpha *= 2.0;
+    }
+
+    float freqMagnitude = length(frequency);
+    float y = sqrt(freqMagnitude) * 2.25;
+    float alpha = gl_VertexID / (frequencyAudio_size.x - 1.0);
+    float x = (alpha*2.0 - 1.0) * waveformWidth*0.5;
+    gl_Position = g3d_ProjectionMatrix * vec4(g3d_WorldToCameraMatrix * vec4(x, y + yOffset, z, 1.0), 1.0);
+}

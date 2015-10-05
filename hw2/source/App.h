@@ -22,7 +22,7 @@ Array<float> g_currentAudioBuffer;
 class App : public GApp {
 protected:
 
-    G3D_DECLARE_ENUM_CLASS(VisualizationMode, SNDPEEK_ALIKE, PARTICLES);
+    G3D_DECLARE_ENUM_CLASS(VisualizationMode, SNDPEEK_ALIKE, PARTICLES, SHADERTOY);
     VisualizationMode m_visualizationMode;
 
     RtAudio m_rtAudio;
@@ -35,10 +35,9 @@ protected:
       RtAudioFormat rtAudioFormat;
       
       AudioSettings() :
-        numChannels(1),
-	  sampleRate(48000),
-	rtAudioFormat(RTAUDIO_FLOAT32)
-      {}
+          numChannels(1),
+          sampleRate(48000),
+          rtAudioFormat(RTAUDIO_FLOAT32) {}
     } m_audioSettings;
 
     int m_maxSavedTimeSlices;
@@ -49,6 +48,11 @@ protected:
     shared_ptr<Texture> m_rawAudioTexture;
 
     shared_ptr<Texture> m_frequencyAudioTexture;
+
+
+    Array<String>   m_shadertoyShaders;
+    int             m_shadertoyShaderIndex;
+
 
     void setAudioShaderArgs(Args& args);
 
