@@ -139,7 +139,7 @@ void App::onInit() {
     GApp::onInit();
 
     m_shadertoyShaderIndex = 0;
-    m_shadertoyShaders.append("sunShader.pix", "cubescape.pix", "fractalLand.pix");
+    m_shadertoyShaders.append("sunShader.pix", "cubescape.pix", "fractalLand.pix", "hex.pix", "playground.pix");
 
     m_maxSavedTimeSlices = 512;
     m_waveformWidth = 7.9f;

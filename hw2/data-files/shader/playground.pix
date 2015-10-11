@@ -1,0 +1,46 @@
+#version 330
+#include "shadertoyHeader.glsl"
+
+float hexLength(vec2 v) {
+      vec2 a = abs(v);
+      return max((2.0/sqrt(3.0))*a.x, (1.0/sqrt(3.0))*a.x + a.y);
+}
+
+vec3 hueGradient(float t) {
+    vec3 p = abs(fract(t + vec3(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0);
+    return (clamp(p - 1.0, 0.0, 1.0));
+}
+
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+     vec2 uv = (fragCoord-(iResolution/2))*2.0/iResolution.y;
+
+     float r = hexLength(uv);
+
+     float numBins = 100.0;
+     float rCoord = floor(numBins*r)/numBins;
+     
+     bool black = false;
+     //black = black || (int(fragCoord.x) % int(iResolution.x/numBins) == 0); 
+     
+     float fractionOfSpectrum = 0.15;
+
+     rCoord = rCoord * fractionOfSpectrum;
+
+
+     float freqValue = sampleAverageFreqMagnitudeOverNFrames(rCoord, 3);
+
+     freqValue = max(0,(pow(freqValue, 0.25) - 0.2));
+     
+     black = black || r > 1.0;
+     if (!black) {
+        fragColor = vec4(0,3,0, 1.0);
+     } else {
+       fragColor = vec4(0,0,0,1);
+     }
+     fragColor *= freqValue;
+
+
+}
+
+#include "shadertoyFooter.glsl"

@@ -16,4 +16,12 @@ float sampleFrequencyMagnitudeAudio(float coord, int time) {
     return length(sampleFrequencyAudio(coord, time));
 }
 
+float sampleAverageFreqMagnitudeOverNFrames(float coord, int n) {
+      float sum = 0.0;
+      for (int i = 0; i < n; ++i) {
+      	  sum += sampleFrequencyMagnitudeAudio(coord, i);
+      }
+      return sum / float(n);     
+}
+
 #endif

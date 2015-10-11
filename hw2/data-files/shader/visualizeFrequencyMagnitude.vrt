@@ -27,7 +27,7 @@ void main() {
     }
 
     float freqMagnitude = length(frequency);
-    float y = sqrt(freqMagnitude) * 2.25;
+    float y = pow(freqMagnitude, 0.25) * 2.25;
     float alpha = gl_VertexID / (frequencyAudio_size.x - 1.0);
     float x = (alpha*2.0 - 1.0) * waveformWidth*0.5;
     gl_Position = g3d_ProjectionMatrix * vec4(g3d_WorldToCameraMatrix * vec4(x, y + yOffset, z, 1.0), 1.0);

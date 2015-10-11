@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 330
 #include "shadertoyHeader.glsl"
 /** ----------------------------------------------------------
 Modified version of the wonderful Fractal Land

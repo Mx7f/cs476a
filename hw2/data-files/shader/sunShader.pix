@@ -1,4 +1,4 @@
-#version 330 compatibility
+#version 330
 #include "shadertoyHeader.glsl"
 /** ----------------------------------------------------------0
     Modified version of the wonderful Main Star Sequence
@@ -39,10 +39,12 @@ float freqs[4];
 
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    freqs[0] = sampleFrequencyMagnitudeAudio(0.01/4, 0);
-    freqs[1] = sampleFrequencyMagnitudeAudio(0.07 / 4, 0);
-    freqs[2] = sampleFrequencyMagnitudeAudio(0.15 / 4, 0);
-    freqs[3] = sampleFrequencyMagnitudeAudio(0.30 / 4, 0);
+     int m = 3;
+     float pw = 0.25;
+    freqs[0] = pow(sampleAverageFreqMagnitudeOverNFrames(0.01, m), pw);
+    freqs[1] = pow(sampleAverageFreqMagnitudeOverNFrames(0.07, m), pw);
+    freqs[2] = pow(sampleAverageFreqMagnitudeOverNFrames(0.15, m), pw);
+    freqs[3] = pow(sampleAverageFreqMagnitudeOverNFrames(0.30, m), pw);
 
     float brightness = freqs[1] * 0.25 + freqs[2] * 0.25;
     float radius = 0.24 + brightness * 0.2;
