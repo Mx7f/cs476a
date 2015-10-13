@@ -148,6 +148,8 @@ void App::onInit() {
 
     m_frequencyAudioTexture = Texture::createEmpty("Frequency Audio Texture", g_currentAudioBuffer.size()/2, 1, ImageFormat::RG32F());
 
+    m_eyeFramebuffer = Framebuffer::create(Texture::createEmpty("Eye Texture", window()->height(), window()->height(), ImageFormat::RGBA16F()));
+
     makeGUI();
     loadScene("Visualizer");
 }
@@ -193,6 +195,9 @@ bool App::onEvent(const GEvent& e) {
 void App::setAudioShaderArgs(Args& args) {
     m_rawAudioTexture->setShaderArgs(args, "rawAudio_", Sampler::video());
     m_frequencyAudioTexture->setShaderArgs(args, "frequencyAudio_", Sampler::video());
+    m_fastMovingAverage.gpuData->setShaderArgs(args, "fastEWMAfreq_", Sampler::video());
+    m_slowMovingAverage.gpuData->setShaderArgs(args, "slowEWMAfreq_", Sampler::video());
+    m_glacialMovingAverage.gpuData->setShaderArgs(args, "glacialEWMAfreq_", Sampler::video());
 }
 
 void App::drawLineGraphFromRawSamples(RenderDevice* rd) {
@@ -242,6 +247,20 @@ void App::updateAudioData() {
     rfft((float*)frequency.getCArray(), frequency.size(), FFT_FORWARD);
     m_cpuFrequencyAudioData.appendPOD(frequency);
 
+    Array<float> frequencyMagnitude;
+    for (complex c : frequency) {
+        frequencyMagnitude.append(cmp_abs(c));
+    }
+    if (isNull(m_fastMovingAverage.gpuData)) {
+        m_fastMovingAverage.init(0.6, frequencyMagnitude, "Fast Freq EWMA");
+        m_slowMovingAverage.init(0.85, frequencyMagnitude, "Slow Freq EWMA");
+        m_glacialMovingAverage.init(0.95, frequencyMagnitude, "Glacial Freq EWMA");
+    } else {
+        m_fastMovingAverage.update(frequencyMagnitude);
+        m_slowMovingAverage.update(frequencyMagnitude);
+        m_glacialMovingAverage.update(frequencyMagnitude);
+    }
+
     shared_ptr<CPUPixelTransferBuffer> freqPTB = CPUPixelTransferBuffer::fromData(freqCount, numStoredTimeSlices, ImageFormat::RG32F(), m_cpuFrequencyAudioData.getCArray());
 
     m_frequencyAudioTexture->resize(freqCount, numStoredTimeSlices);
@@ -263,7 +282,7 @@ void App::updateAudioData() {
 
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurfaces) {
 
-    if (!scene()) {
+    if (!scene() || m_cpuRawAudioData.size() == 0) {
         return;
     }
 
@@ -302,17 +321,41 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
         rd->push2D(m_framebuffer); {
             rd->setColorClearValue(Color3::black());
             rd->clear();
-            
+
             Args args;
             args.setUniform("iResolution", rd->viewport().wh());
             args.setUniform("iGlobalTime", scene()->time());
-            
+
             setAudioShaderArgs(args);
             args.setRect(rd->viewport());
-            
+
             const shared_ptr<G3D::Shader> theShader = G3D::Shader::getShaderFromPattern(m_shadertoyShaders[m_shadertoyShaderIndex]);
-	        G3D::RenderDevice::current->apply(theShader, args);
+            G3D::RenderDevice::current->apply(theShader, args);
         } rd->pop2D();
+    case VisualizationMode::EYE:
+        rd->push2D(m_eyeFramebuffer); {
+            rd->setColorClearValue(Color3::black());
+            rd->clear();
+
+            Args args;
+            args.setUniform("iResolution", rd->viewport().wh());
+            args.setUniform("iGlobalTime", scene()->time());
+
+            setAudioShaderArgs(args);
+            args.setRect(rd->viewport());
+
+            LAUNCH_SHADER("eye.pix", args);
+        } rd->pop2D();
+        rd->push2D(m_framebuffer); {
+            rd->setColorClearValue(Color3::black());
+            rd->clear();
+        } rd->pop2D();
+        /** Copy into the relevant framebuffer*/
+        Texture::copy(m_eyeFramebuffer->texture(0),
+            m_framebuffer->texture(0),
+            0, 0, 1.0f,
+            Vector2int16(-(m_framebuffer->width() - m_eyeFramebuffer->width()) / 2, 0),
+            CubeFace::POS_X, CubeFace::POS_X, rd, false);
         
         break;
     }

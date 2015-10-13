@@ -102,6 +102,7 @@
     <None Include="data-files\scene\visualizer.Scene.Any" />
     <None Include="data-files\shader\audioTextureHelpers.glsl" />
     <None Include="data-files\shader\cubescape.pix" />
+    <None Include="data-files\shader\eye.pix" />
     <None Include="data-files\shader\flatColor.pix" />
     <None Include="data-files\shader\fractalLand.pix" />
     <None Include="data-files\shader\shadertoyFooter.glsl" />

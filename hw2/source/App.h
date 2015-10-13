@@ -22,11 +22,52 @@ Array<float> g_currentAudioBuffer;
 class App : public GApp {
 protected:
 
-    G3D_DECLARE_ENUM_CLASS(VisualizationMode, SNDPEEK_ALIKE, PARTICLES, SHADERTOY);
+    G3D_DECLARE_ENUM_CLASS(VisualizationMode, 
+        SNDPEEK_ALIKE, 
+        PARTICLES, 
+        SHADERTOY,
+        EYE);
     VisualizationMode m_visualizationMode;
+
+    shared_ptr<Framebuffer> m_eyeFramebuffer;
+
 
     RtAudio m_rtAudio;
     float m_waveformWidth;
+
+    /** Exponentially-weighted moving average of frequencies */
+    struct EWMAFrequency {
+        Array<float>        cpuData;
+        shared_ptr<Texture> gpuData;
+        // Update rule: freq_ewma = lerp(freq_current, freq_ewma, alpha)
+        float               alpha;
+
+        void init(float a, const Array<float>& newData, const String& name) {
+            alpha = a;
+            cpuData.appendPOD(newData);
+            gpuData = Texture::createEmpty(name, newData.size(), 1, ImageFormat::R32F());
+            upload();
+        }
+
+        void update(const Array<float>& newData) {
+            alwaysAssertM(newData.size() == cpuData.size(), "Must have same size data for EWMAFrequency update");
+            for (int i = 0; i < newData.size(); ++i) {
+                cpuData[i] = lerp(newData[i], cpuData[i], alpha);
+            }
+            upload();
+        }
+
+        void upload() {
+            debugAssert(notNull(gpuData));
+            shared_ptr<CPUPixelTransferBuffer> ptb = CPUPixelTransferBuffer::fromData(cpuData.size(), 1, ImageFormat::R32F(), cpuData.getCArray());
+            gpuData->update(ptb);
+        }
+    };
+
+    EWMAFrequency m_fastMovingAverage;
+    EWMAFrequency m_slowMovingAverage;
+    EWMAFrequency m_glacialMovingAverage;
+
 
 
     struct AudioSettings {

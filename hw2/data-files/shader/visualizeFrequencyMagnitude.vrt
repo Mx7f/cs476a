@@ -6,7 +6,7 @@
 
 #define complex vec2
 
-uniform_Texture(sampler2D, frequencyAudio_);
+#include "audioTextureHelpers.glsl"
 
 uniform float yOffset;
 
@@ -17,7 +17,7 @@ uniform float numTimeSlices;
 out float colorAlpha;
 
 void main() {
-    complex frequency = texelFetch(frequencyAudio_buffer, ivec2(gl_VertexID, int(frequencyAudio_size.y) - gl_InstanceID - 1), 0).rg;
+    
     
     float zAlpha = (gl_InstanceID / (numTimeSlices - 1.0));
     float z = pow(zAlpha, 1.0) * (-10.0);
@@ -25,7 +25,7 @@ void main() {
     if (gl_InstanceID == 0) {
         colorAlpha *= 2.0;
     }
-
+    complex frequency = texelFetch(frequencyAudio_buffer, ivec2(gl_VertexID, int(frequencyAudio_size.y) - gl_InstanceID - 1), 0).rg;
     float freqMagnitude = length(frequency);
     float y = pow(freqMagnitude, 0.25) * 2.25;
     float alpha = gl_VertexID / (frequencyAudio_size.x - 1.0);

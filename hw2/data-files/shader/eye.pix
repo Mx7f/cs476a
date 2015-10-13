@@ -1,0 +1,92 @@
+#version 330
+#include "shadertoyHeader.glsl"
+
+#define TAU 6.28318530718
+
+#define RADIAL_FREQUENCY 0
+#define RADIAL_WAVEFORM  1
+#define RADIAL_FREQUENCY_HISTORY  2
+#define ANGULAR_FREQUENCY 3
+#define ANGULAR_WAVEFORM 4
+#define ANGULAR_WAVEFORM_SYMMETRY 5
+#define ANGULAR_WAVEFORM_RADIAL_FREQUENCY 6
+#define EXPERIMENTAL 99
+
+
+#define MODE 99
+
+float binUnitSignal(float originalSignal, float numBins) {
+    return (floor(originalSignal * numBins) + 0.5) / numBins;
+}
+
+float frequency(float coord) {
+    return (sampleFrequencyDbAudio(fastEWMAfreq_buffer, coord) + 120.0) / 80.0;
+}
+
+float frequency(sampler2D s, float coord) {
+    return (sampleFrequencyDbAudio(s, coord) + 120.0) / 80.0;
+}
+
+float frequencySlow(float coord) {
+    return frequency(slowEWMAfreq_buffer, coord);
+}
+
+float frequencyGlacial(float coord) {
+    return frequency(glacialEWMAfreq_buffer, coord);
+}
+
+float waveform(float coord) {
+    return sampleRawAudio(coord, 0) * 0.5 + 0.5;
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    float pupilWidth = 0.11 + 0.1*sin(iGlobalTime*0.1);
+    float angleOffset = -iGlobalTime;
+    //pupilWidth = 0.0;
+
+    vec2 h = (iResolution.xy*0.5);
+    vec2 uv = (fragCoord.xy - h) / h.y;
+    float radius = length(uv);
+    float r = (radius - pupilWidth) / (1.0 - pupilWidth);
+    float phi = atan(uv.y, uv.x);
+    float a = (phi / TAU) + 0.5;
+    a = fract(a + angleOffset);
+    //a = binUnitSignal(a, 100.0);
+    //r = binUnitSignal(r, 100.0);
+
+    vec4 color = vec4(0, 0, 0, 0);
+#   if MODE == RADIAL_FREQUENCY
+        color = vec4(0, frequency(r), 0, 1.0);
+#   elif MODE == RADIAL_WAVEFORM
+        color = vec4(0, waveform(r), 0, 1.0);
+#   elif MODE == RADIAL_FREQUENCY_HISTORY 
+        color = vec4(frequencySlow(r), frequency(r), frequencyGlacial(r), 1.0);
+#   elif MODE == ANGULAR_FREQUENCY
+        color = vec4(0, frequency(a), 0, 1.0);
+#   elif MODE == ANGULAR_WAVEFORM
+        color = vec4(0, waveform(a), 0, 1.0);
+#   elif MODE == ANGULAR_WAVEFORM_SYMMETRY
+        color = vec4(0, waveform(abs(a*2.0-1.0)), 0, 1.0);
+#   elif MODE == ANGULAR_WAVEFORM_RADIAL_FREQUENCY
+        color = vec4(0, waveform(abs(a*2.0 - 1.0)) * frequency(r), 0, 1.0) * 2.0;
+#   elif MODE == EXPERIMENTAL
+        
+        color = vec4(0, frequency(fract(r + a)), 0, 1.0) * 2.0;
+#   endif
+
+    vec4 black = vec4(0.0, 0.0, 0.0, 1.0);
+    fragColor = mix(color, black, smoothstep(0.99, 1.0, radius));
+    if (pupilWidth > 0.0) {
+        fragColor = mix(black, fragColor, smoothstep(pupilWidth, pupilWidth + 0.01, radius));
+    }
+    //fragColor = vec4(vec3(fract(r + a)), 1.0);
+}
+
+
+#include "shadertoyFooter.glsl"
+
+
+
+
+
+
