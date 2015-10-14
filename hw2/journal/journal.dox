@@ -4,36 +4,15 @@
 
 \tableofcontents
 
-<i>Newest entries are at the top</i>
+<i>Newest entries are at the top; read entries from bottom to top if they are long!</i>
 
-\section S20151013 2015-10-13: Two Eyes
+\section S20151013A 2015-10-13: Two Eyes
 
-\thumbnail{2015-10-13_019_MusicVisualizer_g3d_r327__.png, }
+\thumbnail{2015-10-13_019_MusicVisualizer_g3d_r327__.png, }\thumbnail{2015-10-13_018_MusicVisualizer_g3d_r327__.png, }\thumbnail{2015-10-13_017_MusicVisualizer_g3d_r327__.png, }\thumbnail{2015-10-13_016_MusicVisualizer_g3d_r327__.png, }\thumbnail{2015-10-13_015_MusicVisualizer_g3d_r327__.png, }
 
+Added a way to randomize eye settings and a second eye. I am happy with life and my visualizer.
 
-
-
-\thumbnail{2015-10-13_018_MusicVisualizer_g3d_r327__.png, }
-
-
-
-
-\thumbnail{2015-10-13_017_MusicVisualizer_g3d_r327__.png, }
-
-
-
-
-\thumbnail{2015-10-13_016_MusicVisualizer_g3d_r327__.png, }
-
-
-
-
-
-\thumbnail{2015-10-13_015_MusicVisualizer_g3d_r327__.png, }
-
-Added a way to randomize eye settings and a second eye. I am happy with this.
-
-\section S20151013 2015-10-13: The Eye
+\section S20151013B 2015-10-13: The Eye
 
 \thumbnail{2015-10-13_014_MusicVisualizer_g3d_r327__Visualizing_everything_at_once_.png, Visualizing everything at once!}
 
@@ -85,14 +64,14 @@ It is easy enough to map the 1D audio values to radius.
 
 As a graphics researcher and Oculus fanboy, I really like the eye aesthetic. As a "The Matrix" fanboy and hombrew themed OS X terminal user; I love green on black. I decided to take to heart Prof. Wang's suggestion to add arbitrary restrictions, and began my quest to make a music visualizer using only a single "eye" and only the color green. The first iteration was simply pushing out the visualization from my inital shadertoy radially to get a pupil.
 
-\section S20151013 2015-10-13: My own shadertoys
+\section S20151013C 2015-10-13: My own shadertoys
 
 
 \thumbnail{2015-10-13_004_MusicVisualizer_g3d_r327__A_version_of_my_Shadertoy__made_within_this_application__replacing_the_length_function_from_my_public_shadertoy_with_a__hexLength__function_.png, A version of my Shadertoy\, made within this application; replacing the length function from my public shadertoy with a \"hexLength\" function.}
 
 Using the Shadertoy harness it was easy to prototype new shaders. I really liked the radial symmetry an single-color aesthetic I had seen in class and so played around with that. At this point I was still leaning towards making a space themed visualizer, but the more I played around with this aesthetic, the less I liked the idea of switching away from it.
 
-\section S20151013 2015-10-13: Shadertoys
+\section S20151013D 2015-10-13: Shadertoys
 
 \thumbnail{2015-10-13_003_MusicVisualizer_g3d_r327__Modified_version_of_the_wonderful_Fractal_Land__shader_by_Kali_https___www_shadertoy_com_view_XsBXWt.png, Modified version of the wonderful Fractal Land
 shader by Kali https://www.shadertoy.com/view/XsBXWt}
@@ -112,7 +91,7 @@ shader by iq https://www.shadertoy.com/view/Msl3Rr}
 
 Shadertoy.com is one of my favorite websites, and I am always impressed with the creations of the users. I decided to make a harness in my program so that it was easy to play with other people's shadertoys. I added support for the most widely used shadertoy uniforms and adapted a few shaders to work in my framework (albeit without input textures).
 
-\section S20151013 2015-10-13: Particle System Deadend
+\section S20151013E 2015-10-13: Particle System Deadend
 
 
 \thumbnail{2015-10-13_000_MusicVisualizer_g3d_r327__Audio_reactive_particle_system.png, Audio reactive particle system}
@@ -155,68 +134,5 @@ Since we have the audio data in texture, it's straightforward to reproduce sndpe
 
 I successfully integrate RtAudio into a simple G3D application. Every render frame I take the current audio data and upload it to a (numSamples x 1) floating point texture, which I am visualizing using G3D's slick texture viewer, zoomed in a bit so its easy to see the smooth gradient caused by whistling.
 
-\section notes Formatting Notes
-Put the newest entry at the top of this file, like a blog. 
-Begin the title of each section with a date in ISO format (YYYY-MM-DD).
-Press F4 and F6 to embed screenshots and video in this journal.
-
-Doxygen supports [markdown syntax](http://www.stack.nl/~dimitri/doxygen/manual/markdown.html),
-[many HTML commands](http://www.stack.nl/~dimitri/doxygen/manual/htmlcmds.html),
-and LaTeX-like [Doxygen commands](http://www.stack.nl/~dimitri/doxygen/manual/commands.html)
-for formatting in this file. The most frequently used of these are:
-
-\verbatim
-[Link syntax](http://g3d.codeplex.com)
-
-Table    | Syntax
--------: | ---------
-  100 ms |  Hello
-  5 ms   |  World
-
-- List
-- Syntax
-  + Subbullet
-
-~~~~~~~~~~~~~
-// Code syntax in C++
-for (int i = 0; i < 10; ++i) {
-   printf("%d\n", i);
-}
-~~~~~~~~~~~~~
-\endverbatim
-
-which produce:
-
-[Link syntax](http://g3d.codeplex.com)
-
-Table  | Syntax
------: | ---------
-  1 ms |  Hello
-500 ms |  World
-
-- List
-- Syntax
-  + Subbullet
-
-~~~~~~~~~~~~~
-// Code syntax in C++
-for (int i = 0; i < 10; ++i) {
-   printf("%d\n", i);
-}
-~~~~~~~~~~~~~
-
-You can manually embed images in this file using the custom G3D Doxygen commands:
-
-\verbatim
-\thumbnail{imagefilename}
-\thumbnail{imagefilename, caption}
-\video{videofilename, caption}
-\endverbatim
-
-The `imagefilename` does not need to include a path.  Put the images
-in the `journal/` or `doc-files/` directories.  They will
-automatically be copied to the `build/doc` directory when you run Doxygen.
-
-If you have Latex installed, then you can display inline (\f$ \int_{-\infty}^{\infty} e^{-x^2} dx \f$) and display math equations, for example: \f[ \int_{-\infty}^{\infty} e^{-x^2} dx \f]
 
 */

@@ -1,39 +1,18 @@
 /** \file mainpage.dox \mainpage
 
-This is the main page of documentation for your project.  Edit
-<code>mainpage.dox</code> to change it.  For example, you might want to list the major features:
+The application (HearEyeAm) is available on github at https://github.com/Mx7f/cs476a. You will need the latest version of the
+G3D Innovation Engine to run this code, build instructions here https://g3d.codeplex.com/SourceControl/latest#G3D10/readme.md
+though you may need the latest from the svn at svn://graphics-svn.cs.williams.edu/g3d/G3D10.
 
-<ul>
-<li> Does something</li>
-<li> Does something else</li>
-</ul>
+Once G3D is building on your machine, use either icompile (provided with G3D), or the visual studio project files to compile.
 
-and explain the most important functions and major classes in a table
-(the full list of classes is generated automatically for the "Classes"
-tab).
+I will aim to do a binary release (so you don't need to compile libraries yourself), in the coming days.
 
-<table style="width:100%; border: 1px #CCC solid;">
-  <tr><td>App</td><td>\copybrief App</td></tr>
-</table>
+The overarching design goal, once I started iterating, was to somehow force all of the requirements of the assignment into
+a single visualization of an eye, rendered only in a pixel shader, in my favorite color scheme of all time: green on black like the Matrix (or OS X "homebrew" terminal).
 
-Doxygen will autotmatically extract documentation for your classes and methods and
-add them to these pages.
+By far the hardest part of this whole process was deciding on a design direction. I spent over a week bouncing around to different ways of visualizing everything before settling on this over constrained direction. I think only by artificially limiting myself was I able to get anything accomplished.
 
-This file and the comments in your may use any commands from the
-<a href="http://www.stack.nl/~dimitri/doxygen/commands.html">Doxygen manual</a>
-and the custom commands:
-
-\verbatim
-\cite source
-\maintainer name
-\created date
-\edited date
-\units units
-\thumbnail{imagefilename}
-\thumbnail{imagefilename,caption}
-\video{videofilename, caption}
-\endverbatim
-
-See also your \link Journal Development Journal \endlink.  
+See the \link Journal Development Journal \endlink for *many* more details on this project; including loads of screenshots!
 
 */
