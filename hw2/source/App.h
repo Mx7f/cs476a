@@ -42,7 +42,22 @@ protected:
 
     EyeMode m_eyeMode;
 
+    struct EyeSettings {
+        /** Width of the pupil in the eye */
+        float pupilWidth;
+        float angleOffsetTimeMultiplier;
+        EyeSettings() : pupilWidth(0.15), angleOffsetTimeMultiplier(1.0) {}
+    };
+    EyeSettings m_eyeSettings;
+
+    /** EWMA of RMS */
+    float m_smoothedRootMeanSquare;
+    bool m_useRootMeanSquarePupil;
+    
+
     shared_ptr<Framebuffer> m_eyeFramebuffer;
+
+
 
 
     RtAudio m_rtAudio;

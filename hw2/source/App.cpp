@@ -150,6 +150,9 @@ void App::onInit() {
 
     m_eyeFramebuffer = Framebuffer::create(Texture::createEmpty("Eye Texture", window()->height(), window()->height(), ImageFormat::RGBA16F()));
 
+    m_useRootMeanSquarePupil = true;
+    m_smoothedRootMeanSquare = 0.0f;
+
     makeGUI();
     loadScene("Visualizer");
 }
@@ -161,6 +164,14 @@ void App::makeGUI() {
     developerWindow->videoRecordDialog->setEnabled(true);
     debugPane->beginRow(); {
         debugPane->addEnumClassRadioButtons<VisualizationMode>("Mode", &m_visualizationMode);
+    } debugPane->endRow();
+    debugPane->beginRow(); {
+        debugPane->addEnumClassRadioButtons<EyeMode>("Eye Mode", &m_eyeMode);
+    } debugPane->endRow();
+    debugPane->beginRow(); {
+        debugPane->addCheckBox("Use RMS", &m_useRootMeanSquarePupil);
+        debugPane->addNumberBox("Pupil Size", &m_eyeSettings.pupilWidth, "", GuiTheme::LINEAR_SLIDER, 0.0f, 0.4f);
+        debugPane->addNumberBox("Time Mult.", &m_eyeSettings.angleOffsetTimeMultiplier, "", GuiTheme::LINEAR_SLIDER, 0.0f, 4.0f);
     } debugPane->endRow();
     GuiDropDownList* list = debugPane->addDropDownList("Shadertoy Shader", m_shadertoyShaders, &m_shadertoyShaderIndex);
     list->setCaptionWidth(100);
@@ -235,6 +246,13 @@ void App::updateAudioData() {
     int freqCount = sampleCount / 2;
     m_cpuRawAudioData.appendPOD(g_currentAudioBuffer);
 
+    float sumSquare = 0.0f;
+    for (int i = m_cpuRawAudioData.size() - sampleCount; i < m_cpuRawAudioData.size(); ++i) {
+        sumSquare += square(m_cpuRawAudioData[i]);
+    }
+    float rms = sqrt(sumSquare / sampleCount);
+    m_smoothedRootMeanSquare = lerp(rms, m_smoothedRootMeanSquare, 0.95f);
+
     int numStoredTimeSlices = m_cpuRawAudioData.size() / sampleCount;
     shared_ptr<CPUPixelTransferBuffer> ptb = CPUPixelTransferBuffer::fromData(sampleCount, numStoredTimeSlices, ImageFormat::R32F(), m_cpuRawAudioData.getCArray());
     m_rawAudioTexture->resize(sampleCount, numStoredTimeSlices);
@@ -286,14 +304,12 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
         return;
     }
 
-
     debugAssertGLOk();
     GApp::swapBuffers();
     debugAssertGLOk();
     rd->clear();
     debugAssertGLOk();
     FilmSettings filmSettings = activeCamera()->filmSettings();
-
 
     switch (m_visualizationMode) {
     case VisualizationMode::SNDPEEK_ALIKE:
@@ -341,7 +357,11 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
             Args args;
             args.setUniform("iResolution", rd->viewport().wh());
             args.setUniform("iGlobalTime", scene()->time());
-	    args.setMacro("MODE", m_eyeMode);
+            
+            float adjustedRMS = m_smoothedRootMeanSquare * (1 - m_eyeSettings.pupilWidth) + m_eyeSettings.pupilWidth;
+            args.setUniform("pupilWidth", m_useRootMeanSquarePupil ? adjustedRMS : m_eyeSettings.pupilWidth);
+            args.setUniform("angleOffsetTimeMultiplier", m_eyeSettings.angleOffsetTimeMultiplier);
+	        args.setMacro("MODE", m_eyeMode);
             setAudioShaderArgs(args);
             args.setRect(rd->viewport());
 
@@ -361,9 +381,6 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
         break;
     }
 	    
-
-
-    //    Draw::axes(CoordinateFrame(Vector3(0, 0, 0)), rd);
     debugAssertGLOk();
     
     m_film->exposeAndRender(rd, filmSettings, m_framebuffer->texture(0));
@@ -374,8 +391,13 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
 
 void App::onUserInput(UserInput* ui) {
     GApp::onUserInput(ui);
-    
-    (void)ui;
+    if (ui->keyPressed(GKey::PERIOD)) {
+        m_eyeMode = EyeMode((m_eyeMode + 1) % EyeMode::COUNT);
+    }
+    if (ui->keyPressed(GKey::COMMA)) {
+        m_eyeMode = EyeMode((m_eyeMode + EyeMode::COUNT - 1) % EyeMode::COUNT);
+    }
+
     // Add key handling here based on the keys currently held or
     // ones that changed in the last frame.
 }
@@ -388,6 +410,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<Surface2D::Ref>& posed2D) {
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
     GApp::onSimulation(rdt, sdt, idt);
     updateAudioData();
+    /* Prototype debug code for particle systems, not used in final product
     if (m_visualizationMode == VisualizationMode::PARTICLES) {
         int sampleCount = g_currentAudioBuffer.size();
         int freqCount = sampleCount / 2;
@@ -436,7 +459,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 
     }
-
+    */
 
     // Example GUI dynamic layout code.  Resize the debugWindow to fill
     // the screen horizontally.
