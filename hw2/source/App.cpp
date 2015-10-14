@@ -13,6 +13,8 @@ int main(int argc, const char* argv[]) {
     settings.window.width       = 1280; 
     settings.window.height      = 720;
     settings.window.asynchronous = false;
+    settings.window.resizable = true;
+    settings.window.caption = "HearEyeAm";
     settings.dataDir = FileSystem::currentDirectory();
     settings.screenshotDirectory = "../journal/";
 
@@ -61,50 +63,7 @@ void App::initializeAudio() {
   RtAudio::DeviceInfo info;
 
   unsigned int devices = m_rtAudio.getDeviceCount();
-  std::cout << "\nFound " << devices << " device(s) ...\n";
 
-  for (unsigned int i=0; i<devices; i++) {
-    info = m_rtAudio.getDeviceInfo(i);
-
-    std::cout << "\nDevice Name = " << info.name << '\n';
-    if ( info.probed == false )
-      std::cout << "Probe Status = UNsuccessful\n";
-    else {
-      std::cout << "Probe Status = Successful\n";
-      std::cout << "Output Channels = " << info.outputChannels << '\n';
-      std::cout << "Input Channels = " << info.inputChannels << '\n';
-      std::cout << "Duplex Channels = " << info.duplexChannels << '\n';
-      if ( info.isDefaultOutput ) std::cout << "This is the default output device.\n";
-      else std::cout << "This is NOT the default output device.\n";
-      if ( info.isDefaultInput ) std::cout << "This is the default input device.\n";
-      else std::cout << "This is NOT the default input device.\n";
-      if ( info.nativeFormats == 0 )
-	std::cout << "No natively supported data formats(?)!";
-      else {
-	std::cout << "Natively supported data formats:\n";
-        if ( info.nativeFormats & RTAUDIO_SINT8 )
-	  std::cout << "  8-bit int\n";
-        if ( info.nativeFormats & RTAUDIO_SINT16 )
-	  std::cout << "  16-bit int\n";
-        if ( info.nativeFormats & RTAUDIO_SINT24 )
-	  std::cout << "  24-bit int\n";
-        if ( info.nativeFormats & RTAUDIO_SINT32 )
-	  std::cout << "  32-bit int\n";
-        if ( info.nativeFormats & RTAUDIO_FLOAT32 )
-	  std::cout << "  32-bit float\n";
-        if ( info.nativeFormats & RTAUDIO_FLOAT64 )
-	  std::cout << "  64-bit float\n";
-      }
-      if ( info.sampleRates.size() < 1 )
-	std::cout << "No supported sample rates found!";
-      else {
-	std::cout << "Supported sample rates = ";
-        for (unsigned int j=0; j<info.sampleRates.size(); j++)
-	  std::cout << info.sampleRates[j] << " ";
-      }
-      std::cout << std::endl;
-    }
-  }
 
   // Let RtAudio print messages to stderr.
   m_rtAudio.showWarnings( true );
@@ -138,6 +97,8 @@ void App::initializeAudio() {
 void App::onInit() {
     GApp::onInit();
 
+    printf("Welcome to HearEyeAm.\nUse ',' and '.' to toggle the different eye modes.\nUse 'r' to randomize the eye settings.\nUse 'e' to switch between monocular and binocular visualiztion. :)\n");
+
     m_shadertoyShaderIndex = 0;
     m_shadertoyShaders.append("sunShader.pix", "cubescape.pix", "fractalLand.pix", "hex.pix", "playground.pix");
 
@@ -148,9 +109,12 @@ void App::onInit() {
 
     m_frequencyAudioTexture = Texture::createEmpty("Frequency Audio Texture", g_currentAudioBuffer.size()/2, 1, ImageFormat::RG32F());
 
-    m_eyeFramebuffer = Framebuffer::create(Texture::createEmpty("Eye Texture", window()->height(), window()->height(), ImageFormat::RGBA16F()));
+    m_visualizationMode = VisualizationMode::EYE;
 
-    m_useRootMeanSquarePupil = true;
+    m_eyeFramebuffer = Framebuffer::create(Texture::createEmpty("Eye Texture", window()->height(), window()->height(), ImageFormat::RGBA16F()));
+    
+    m_secondaryEyeSettings.randomize();
+
     m_smoothedRootMeanSquare = 0.0f;
 
     makeGUI();
@@ -160,16 +124,16 @@ void App::onInit() {
 void App::makeGUI() {
     // Initialize the developer HUD (using the existing scene)
     createDeveloperHUD();
-    debugWindow->setVisible(true);
+    debugWindow->setVisible(false);
     developerWindow->videoRecordDialog->setEnabled(true);
     debugPane->beginRow(); {
         debugPane->addEnumClassRadioButtons<VisualizationMode>("Mode", &m_visualizationMode);
     } debugPane->endRow();
     debugPane->beginRow(); {
-        debugPane->addEnumClassRadioButtons<EyeMode>("Eye Mode", &m_eyeMode);
+        debugPane->addEnumClassRadioButtons<EyeMode>("Eye Mode", &m_eyeSettings.mode);
     } debugPane->endRow();
     debugPane->beginRow(); {
-        debugPane->addCheckBox("Use RMS", &m_useRootMeanSquarePupil);
+        debugPane->addCheckBox("Use RMS", &m_eyeSettings.useRootMeanSquarePupil);
         debugPane->addNumberBox("Pupil Size", &m_eyeSettings.pupilWidth, "", GuiTheme::LINEAR_SLIDER, 0.0f, 0.4f);
         debugPane->addNumberBox("Time Mult.", &m_eyeSettings.angleOffsetTimeMultiplier, "", GuiTheme::LINEAR_SLIDER, 0.0f, 4.0f);
     } debugPane->endRow();
@@ -181,6 +145,8 @@ void App::makeGUI() {
     debugWindow->pack();
     debugWindow->setRect(Rect2D::xywh(0, 0, (float)window()->width(), debugWindow->rect().height()));
     developerWindow->cameraControlWindow->setVisible(false);
+    developerWindow->sceneEditorWindow->setVisible(false);
+    developerWindow->setVisible(false);
     showRenderingStats = false;
     developerWindow->cameraControlWindow->moveTo(Point2(developerWindow->cameraControlWindow->rect().x0(), 0));
 
@@ -298,6 +264,21 @@ void App::updateAudioData() {
     }
 }
 
+void App::drawEye(RenderDevice* rd, const Rect2D& rect, const EyeSettings& settings) {
+    Args args;
+    args.setUniform("iResolution", rect.wh());
+    args.setUniform("iGlobalTime", scene()->time());
+
+    float adjustedRMS = m_smoothedRootMeanSquare * (1 - settings.pupilWidth) + settings.pupilWidth;
+    args.setUniform("pupilWidth", settings.useRootMeanSquarePupil ? adjustedRMS : settings.pupilWidth);
+    args.setUniform("angleOffsetTimeMultiplier", settings.angleOffsetTimeMultiplier);
+    args.setMacro("MODE", settings.mode);
+    setAudioShaderArgs(args);
+    args.setRect(rect);
+
+    LAUNCH_SHADER("eye.pix", args);
+}
+
 void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurfaces) {
 
     if (!scene() || m_cpuRawAudioData.size() == 0) {
@@ -353,19 +334,8 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
         rd->push2D(m_eyeFramebuffer); {
             rd->setColorClearValue(Color3::black());
             rd->clear();
-
-            Args args;
-            args.setUniform("iResolution", rd->viewport().wh());
-            args.setUniform("iGlobalTime", scene()->time());
+            drawEye(rd, rd->viewport(), m_eyeSettings);
             
-            float adjustedRMS = m_smoothedRootMeanSquare * (1 - m_eyeSettings.pupilWidth) + m_eyeSettings.pupilWidth;
-            args.setUniform("pupilWidth", m_useRootMeanSquarePupil ? adjustedRMS : m_eyeSettings.pupilWidth);
-            args.setUniform("angleOffsetTimeMultiplier", m_eyeSettings.angleOffsetTimeMultiplier);
-	        args.setMacro("MODE", m_eyeMode);
-            setAudioShaderArgs(args);
-            args.setRect(rd->viewport());
-
-            LAUNCH_SHADER("eye.pix", args);
         } rd->pop2D();
         rd->push2D(m_framebuffer); {
             rd->setColorClearValue(Color3::black());
@@ -378,6 +348,18 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
             Vector2int16(-(m_framebuffer->width() - m_eyeFramebuffer->width()) / 2, 0),
             CubeFace::POS_X, CubeFace::POS_X, rd, false);
         
+        break;
+    case VisualizationMode::TWO_EYES:
+        rd->push2D(m_framebuffer); {
+            rd->setColorClearValue(Color3::black());
+            rd->clear();
+            float s = rd->viewport().width() / 2;
+            float y = (rd->viewport().height() - s) / 2;
+            Rect2D left = Rect2D::xywh(0, y, s, s);
+            drawEye(rd, left, m_eyeSettings);
+            Rect2D right = Rect2D::xywh(rd->viewport().width()/2, y, s, s);
+            drawEye(rd, right, m_secondaryEyeSettings);
+        } rd->pop2D();
         break;
     }
 	    
@@ -392,10 +374,19 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
 void App::onUserInput(UserInput* ui) {
     GApp::onUserInput(ui);
     if (ui->keyPressed(GKey::PERIOD)) {
-        m_eyeMode = EyeMode((m_eyeMode + 1) % EyeMode::COUNT);
+        m_eyeSettings.mode = EyeMode((m_eyeSettings.mode + 1) % EyeMode::COUNT);
     }
     if (ui->keyPressed(GKey::COMMA)) {
-        m_eyeMode = EyeMode((m_eyeMode + EyeMode::COUNT - 1) % EyeMode::COUNT);
+        m_eyeSettings.mode = EyeMode((m_eyeSettings.mode + EyeMode::COUNT - 1) % EyeMode::COUNT);
+    }
+    if (ui->keyPressed(GKey('r'))) {
+        m_eyeSettings.randomize();
+        m_secondaryEyeSettings.randomize();
+    }
+    if (ui->keyPressed(GKey('e'))) {
+        m_visualizationMode = (m_visualizationMode == VisualizationMode::EYE) ? 
+            VisualizationMode::TWO_EYES : 
+            VisualizationMode::EYE;
     }
 
     // Add key handling here based on the keys currently held or
@@ -410,7 +401,7 @@ void App::onGraphics2D(RenderDevice* rd, Array<Surface2D::Ref>& posed2D) {
 void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
     GApp::onSimulation(rdt, sdt, idt);
     updateAudioData();
-    /* Prototype debug code for particle systems, not used in final product
+    /* Prototype debug code for particle systems, not used in final product */
     if (m_visualizationMode == VisualizationMode::PARTICLES) {
         int sampleCount = g_currentAudioBuffer.size();
         int freqCount = sampleCount / 2;
@@ -459,7 +450,7 @@ void App::onSimulation(RealTime rdt, SimTime sdt, SimTime idt) {
 
 
     }
-    */
+    
 
     // Example GUI dynamic layout code.  Resize the debugWindow to fill
     // the screen horizontally.

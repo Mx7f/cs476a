@@ -4,6 +4,8 @@ uniform vec3 color;
 
 out vec4 result;
 
+
 void main() {
+    // Just write out the flat color
     result = vec4(color, 1.0);
 }

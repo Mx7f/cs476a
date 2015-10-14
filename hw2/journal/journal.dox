@@ -6,6 +6,119 @@
 
 <i>Newest entries are at the top</i>
 
+\section S20151013 2015-10-13: Two Eyes
+
+\thumbnail{2015-10-13_019_MusicVisualizer_g3d_r327__.png, }
+
+
+
+
+\thumbnail{2015-10-13_018_MusicVisualizer_g3d_r327__.png, }
+
+
+
+
+\thumbnail{2015-10-13_017_MusicVisualizer_g3d_r327__.png, }
+
+
+
+
+\thumbnail{2015-10-13_016_MusicVisualizer_g3d_r327__.png, }
+
+
+
+
+
+\thumbnail{2015-10-13_015_MusicVisualizer_g3d_r327__.png, }
+
+Added a way to randomize eye settings and a second eye. I am happy with this.
+
+\section S20151013 2015-10-13: The Eye
+
+\thumbnail{2015-10-13_014_MusicVisualizer_g3d_r327__Visualizing_everything_at_once_.png, Visualizing everything at once!}
+
+I multiply back in the angular visualization of the waveform, and adjust the pupil size based on an exponentially-weighted moving average of RMS, and all of a sudden, a single eye fulfills all of the assignment's requirements. And is pretty pot smoking!
+
+
+\thumbnail{2015-10-13_013_MusicVisualizer_g3d_r327__Time-varying_spiral_frequency.png, Time-varying spiral frequency}
+
+Now this is pot-smoking. Time is now near the pupil and fades off into history as we get further from the center. I added a rotation dependent on time to the spiral as well, which turns at just the right rate of speed so that bits of sound history actually fade out straight radially, which is a really cool aesthetic. So now we have frequency visualized along with its history. Time to add back in direct waveform visualization.
+
+
+\thumbnail{2015-10-13_012_MusicVisualizer_g3d_r327__Spiral_Visualization_of_Frequency.png, Spiral Visualization of Frequency}
+
+With the last visualization, I had a problem. I wanted to introduce a frequency history visualization, as required in the assignment. But I was radially varying frequency, and saw no easy way to translate that into showing history (I could use Z, but then the eyes would blend over each other, which would be very difficult to decipher visually and probably wouldn't look good. Angularly-varying has a better story for history: let time vary along radius. But angularly-varying frequency is boring, as we saw before, so I spiced things up and added a spiral. Much more exciting! And sets up for the next visualization.
+
+
+\thumbnail{2015-10-13_011_MusicVisualizer_g3d_r327__Multiplying_radial_frequency_with_angular_waveform.png, Multiplying radial frequency with angular waveform}
+
+By multiplying the radially-varying frequency visualization with the angularly-varying waveform visualization. Now this really looks like an iris, and manages to simultaneously visualize 2 of the 4 things required by our assignment.
+
+
+\thumbnail{2015-10-13_010_MusicVisualizer_g3d_r327__Mapping_over_half_the_angles__and_reflecting.png, Mapping over half the angles\, and reflecting}
+
+I got rid of the annoying seam from the angular visualization of the waveform by mapping only over the first pi angles and reflecting the result over the x axis.
+
+
+\thumbnail{2015-10-13_009_MusicVisualizer_g3d_r327__Waveform_mapped_to_angle.png, Waveform mapped to angle}
+
+The waveform actually looks pretty good visualized angularly.
+
+
+\thumbnail{2015-10-13_008_MusicVisualizer_g3d_r327__Mapping_frequency_over_angle.png, Mapping frequency over angle}
+
+Instead of mapping the 1D domain radially, we can also do it over the polar coordinate phi value. By itself I do not really appreciate this aesthetic, looks too much like a loading screen.
+
+
+\thumbnail{2015-10-13_007_MusicVisualizer_g3d_r327__Using_an_exponentially-weighted_moving_average_of_the_frequency__with_a_diffferent_weight_in_each_color_channel.png, Using an exponentially-weighted moving average of the frequency\, with a diffferent weight in each color channel}
+
+I took a short detour from my single color restriction (rules are made to be broken!) to try an interesting way of visualizing the time-varying nature of the frequency: I kept track of three exponentially-weighted moving averages of the frequency with different weights (the highest weight made the average change slowly and smoothly, while the lowest changed quickly and juttery). I then visualized each of the three in one of the color channels, leading to an interesting color-changing eye. Although it is cool, I decided to go back to my restriction and push harder there.
+
+
+\thumbnail{2015-10-13_006_MusicVisualizer_g3d_r327__Waveform_Visualization.png, Waveform Visualization}
+
+It is easy enough to map the 1D audio values to radius.
+
+
+
+\thumbnail{2015-10-13_005_MusicVisualizer_g3d_r327__My_first_eye_.png, My first eye.}
+
+As a graphics researcher and Oculus fanboy, I really like the eye aesthetic. As a "The Matrix" fanboy and hombrew themed OS X terminal user; I love green on black. I decided to take to heart Prof. Wang's suggestion to add arbitrary restrictions, and began my quest to make a music visualizer using only a single "eye" and only the color green. The first iteration was simply pushing out the visualization from my inital shadertoy radially to get a pupil.
+
+\section S20151013 2015-10-13: My own shadertoys
+
+
+\thumbnail{2015-10-13_004_MusicVisualizer_g3d_r327__A_version_of_my_Shadertoy__made_within_this_application__replacing_the_length_function_from_my_public_shadertoy_with_a__hexLength__function_.png, A version of my Shadertoy\, made within this application; replacing the length function from my public shadertoy with a \"hexLength\" function.}
+
+Using the Shadertoy harness it was easy to prototype new shaders. I really liked the radial symmetry an single-color aesthetic I had seen in class and so played around with that. At this point I was still leaning towards making a space themed visualizer, but the more I played around with this aesthetic, the less I liked the idea of switching away from it.
+
+\section S20151013 2015-10-13: Shadertoys
+
+\thumbnail{2015-10-13_003_MusicVisualizer_g3d_r327__Modified_version_of_the_wonderful_Fractal_Land__shader_by_Kali_https___www_shadertoy_com_view_XsBXWt.png, Modified version of the wonderful Fractal Land
+shader by Kali https://www.shadertoy.com/view/XsBXWt}
+
+
+
+
+\thumbnail{2015-10-13_002_MusicVisualizer_g3d_r327__Modified_version_of_the_wonderful_Cubescape__shader_by_iq_https___www_shadertoy_com_view_Msl3Rr.png, Modified version of the wonderful Cubescape
+shader by iq https://www.shadertoy.com/view/Msl3Rr}
+
+
+
+
+
+\thumbnail{2015-10-13_001_MusicVisualizer_g3d_r327__Modified_version_of_the_wonderful_Main_Star_Sequence___shader_by_flight404_https___www_shadertoy_com_view_4dXGR4.png, Modified version of the wonderful Main Star Sequence
+ shader by flight404 https://www.shadertoy.com/view/4dXGR4}
+
+Shadertoy.com is one of my favorite websites, and I am always impressed with the creations of the users. I decided to make a harness in my program so that it was easy to play with other people's shadertoys. I added support for the most widely used shadertoy uniforms and adapted a few shaders to work in my framework (albeit without input textures).
+
+\section S20151013 2015-10-13: Particle System Deadend
+
+
+\thumbnail{2015-10-13_000_MusicVisualizer_g3d_r327__Audio_reactive_particle_system.png, Audio reactive particle system}
+
+I threw together a particle system that reacted to audio by spawning particles with velocity in the xy plane determined by the complex coordinates of the frequency values after a short FFT. This did produce an interesting effect, but after the in-class demo event, I decided to try and do more with far more restrictions, and put aside particle systems.
+
 \section S20151004 2015-10-04: Frequency Visualization
 
 \thumbnail{2015-10-04_003_MusicVisualizer_g3d_r320__Added_a_Waterfall.jpg, Added a Waterfall}

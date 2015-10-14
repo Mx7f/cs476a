@@ -1,8 +1,8 @@
 #version 330
 #include "shadertoyHeader.glsl"
-/** ----------------------------------------------------------0
+/** -----------------------------------------------------------
     Modified version of the wonderful Main Star Sequence
-    shader by https://www.shadertoy.com/view/4dXGR4 flight404
+    shader by flight404 https://www.shadertoy.com/view/4dXGR4 
     -----------------------------------------------------------
     */
 

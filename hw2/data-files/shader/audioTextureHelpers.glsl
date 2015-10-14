@@ -7,6 +7,8 @@ uniform_Texture(sampler2D, fastEWMAfreq_);
 uniform_Texture(sampler2D, slowEWMAfreq_);
 uniform_Texture(sampler2D, glacialEWMAfreq_);
 
+
+// A bunch of helper methods for sampling from the audio textures and perhaps doing a transform on the data
 float sampleRawAudio(float coord, int time) {
     return textureLod(rawAudio_buffer, vec2(coord, (rawAudio_size.y - time - 0.5)*rawAudio_invSize.y), 0).x;
 }
@@ -50,6 +52,7 @@ float sampleExactFrequencyRescaledDbAudio(int coord, float scale, int time) {
     return (20.0*log10(length(frequency)*frequencyAudio_invSize.x) + scale) / scale;
 }
 
+// Slow, only use for prototyping
 float sampleAverageFreqRescaledDbOverNFrames(float coord, float scale, int n) {
     float sum = 0.0;
     for (int i = 0; i < n; ++i) {
@@ -58,6 +61,7 @@ float sampleAverageFreqRescaledDbOverNFrames(float coord, float scale, int n) {
     return sum / float(n);
 }
 
+// Slow, only use for prototyping
 float sampleAverageFreqMagnitudeOverNFrames(float coord, int n) {
       float sum = 0.0;
       for (int i = 0; i < n; ++i) {

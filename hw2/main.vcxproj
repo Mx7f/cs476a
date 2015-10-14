@@ -89,7 +89,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="source\App.h" />
-    <ClInclude Include="source\AudioParticleSystem.h" />
     <ClInclude Include="source\chuck_fft.h" />
     <ClInclude Include="source\RtAudio.h" />
   </ItemGroup>

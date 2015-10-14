@@ -45,6 +45,7 @@
 #ifndef __RTAUDIO_H
 #define __RTAUDIO_H
 #ifdef _MSC_VER 
+ // Compile RtAudio with windows direct sound support
 #   define __WINDOWS_DS__
 #endif
 #define RTAUDIO_VERSION "4.1.1"

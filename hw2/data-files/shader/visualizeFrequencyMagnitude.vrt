@@ -18,17 +18,26 @@ out float colorAlpha;
 
 void main() {
     
-    
+    // Choose z based on instance ID (each ID is its own time slice
     float zAlpha = (gl_InstanceID / (numTimeSlices - 1.0));
     float z = pow(zAlpha, 1.0) * (-10.0);
+
+    // Make close lines brighter
     colorAlpha = pow(1.0 - zAlpha, 2.0);
+
+    // Double the brightness of the front most line
     if (gl_InstanceID == 0) {
         colorAlpha *= 2.0;
     }
+
+    // Calc y coordinate from frequency
     complex frequency = texelFetch(frequencyAudio_buffer, ivec2(gl_VertexID, int(frequencyAudio_size.y) - gl_InstanceID - 1), 0).rg;
     float freqMagnitude = length(frequency);
     float y = pow(freqMagnitude, 0.25) * 2.25;
+
+    // X coord from vertex ID
     float alpha = gl_VertexID / (frequencyAudio_size.x - 1.0);
     float x = (alpha*2.0 - 1.0) * waveformWidth*0.5;
+    // Modelviewprojection transform
     gl_Position = g3d_ProjectionMatrix * vec4(g3d_WorldToCameraMatrix * vec4(x, y + yOffset, z, 1.0), 1.0);
 }

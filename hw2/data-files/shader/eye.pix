@@ -11,7 +11,7 @@ float binUnitSignal(float originalSignal, float numBins) {
     return (floor(originalSignal * numBins) + 0.5) / numBins;
 }
 
-
+// Wrappers for sampling textures and scaling them to 0-1 in an ad-hoc visually pleasing manner
 float frequency(float coord) {
     return (sampleFrequencyDbAudio(fastEWMAfreq_buffer, coord) + 120.0) / 80.0;
 }
@@ -19,7 +19,6 @@ float frequency(float coord) {
 float frequency(float coord, float time) {
     return (sampleFrequencyDbAudio(coord, time) + 120.0) / 80.0;
 }
-
 
 float frequency(sampler2D s, float coord) {
     return (sampleFrequencyDbAudio(s, coord) + 120.0) / 80.0;
@@ -50,8 +49,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float phi = atan(uv.y, uv.x);
     float a = (phi / TAU) + 0.5;
     a = fract(a + angleOffset);
-    //a = binUnitSignal(a, 100.0);
-    //r = binUnitSignal(r, 100.0);
+
     float time  = r * frequencyAudio_size.y * 0.2;
     float historyA = fract(a + time * 1.0/60.0);
 
