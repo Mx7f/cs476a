@@ -332,6 +332,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
             const shared_ptr<G3D::Shader> theShader = G3D::Shader::getShaderFromPattern(m_shadertoyShaders[m_shadertoyShaderIndex]);
             G3D::RenderDevice::current->apply(theShader, args);
         } rd->pop2D();
+	break;
     case VisualizationMode::EYE:
         rd->push2D(m_eyeFramebuffer); {
             rd->setColorClearValue(Color3::black());
@@ -340,7 +341,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
             Args args;
             args.setUniform("iResolution", rd->viewport().wh());
             args.setUniform("iGlobalTime", scene()->time());
-
+	    args.setMacro("MODE", m_eyeMode);
             setAudioShaderArgs(args);
             args.setRect(rd->viewport());
 
@@ -373,6 +374,7 @@ void App::onGraphics3D(RenderDevice* rd, Array<shared_ptr<Surface> >& allSurface
 
 void App::onUserInput(UserInput* ui) {
     GApp::onUserInput(ui);
+    
     (void)ui;
     // Add key handling here based on the keys currently held or
     // ones that changed in the last frame.

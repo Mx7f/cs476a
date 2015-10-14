@@ -1,9 +1,6 @@
 /**
-  @file App.h
+  \file App.h
 
-  The G3D 9.0 default starter app is configured for OpenGL 3.0 and relatively recent
-  GPUs.  To support older GPUs you may want to disable the framebuffer and film
-  classes and use G3D::Sky to handle the skybox.
  */
 #ifndef App_h
 #define App_h
@@ -28,6 +25,22 @@ protected:
         SHADERTOY,
         EYE);
     VisualizationMode m_visualizationMode;
+
+    // Parallel for eyeModel.glsl
+    G3D_DECLARE_ENUM_CLASS(EyeMode, 
+			   RADIAL_FREQUENCY, 
+			   RADIAL_WAVEFORM, 
+			   RADIAL_FREQUENCY_HISTORY,
+			   ANGULAR_FREQUENCY,
+			   ANGULAR_WAVEFORM,
+			   ANGULAR_WAVEFORM_SYMMETRY,
+			   ANGULAR_WAVEFORM_RADIAL_FREQUENCY,
+			   SPIRAL_FREQUENCY,
+			   SPIRAL_FREQUENCY_HISTORY,
+			   ANGULAR_WAVEFORM_SPIRAL_FREQUENCY_HISTORY,
+			   COUNT);
+
+    EyeMode m_eyeMode;
 
     shared_ptr<Framebuffer> m_eyeFramebuffer;
 

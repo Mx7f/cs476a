@@ -3,25 +3,23 @@
 
 #define TAU 6.28318530718
 
-#define RADIAL_FREQUENCY 0
-#define RADIAL_WAVEFORM  1
-#define RADIAL_FREQUENCY_HISTORY  2
-#define ANGULAR_FREQUENCY 3
-#define ANGULAR_WAVEFORM 4
-#define ANGULAR_WAVEFORM_SYMMETRY 5
-#define ANGULAR_WAVEFORM_RADIAL_FREQUENCY 6
-#define EXPERIMENTAL 99
+#include "eyeMode.glsl"
 
-
-#define MODE 99
+#expect MODE "EyeMode"
 
 float binUnitSignal(float originalSignal, float numBins) {
     return (floor(originalSignal * numBins) + 0.5) / numBins;
 }
 
+
 float frequency(float coord) {
     return (sampleFrequencyDbAudio(fastEWMAfreq_buffer, coord) + 120.0) / 80.0;
 }
+
+float frequency(float coord, float time) {
+    return (sampleFrequencyDbAudio(coord, time) + 120.0) / 80.0;
+}
+
 
 float frequency(sampler2D s, float coord) {
     return (sampleFrequencyDbAudio(s, coord) + 120.0) / 80.0;
@@ -39,13 +37,14 @@ float waveform(float coord) {
     return sampleRawAudio(coord, 0) * 0.5 + 0.5;
 }
 
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    float pupilWidth = 0.11 + 0.1*sin(iGlobalTime*0.1);
-    float angleOffset = -iGlobalTime;
-    //pupilWidth = 0.0;
+uniform float pupilWidth;
+uniform float angleOffsetTimeMultiplier;
 
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 h = (iResolution.xy*0.5);
     vec2 uv = (fragCoord.xy - h) / h.y;
+
+    float angleOffset = -iGlobalTime * angleOffsetTimeMultiplier;
     float radius = length(uv);
     float r = (radius - pupilWidth) / (1.0 - pupilWidth);
     float phi = atan(uv.y, uv.x);
@@ -53,26 +52,31 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     a = fract(a + angleOffset);
     //a = binUnitSignal(a, 100.0);
     //r = binUnitSignal(r, 100.0);
+    float time  = r * frequencyAudio_size.y * 0.2;
+    float historyA = fract(a + time * 1.0/60.0);
 
     vec4 color = vec4(0, 0, 0, 0);
-#   if MODE == RADIAL_FREQUENCY
+    if (MODE == RADIAL_FREQUENCY) {
         color = vec4(0, frequency(r), 0, 1.0);
-#   elif MODE == RADIAL_WAVEFORM
+    } else if (MODE == RADIAL_WAVEFORM) {
         color = vec4(0, waveform(r), 0, 1.0);
-#   elif MODE == RADIAL_FREQUENCY_HISTORY 
+    } else if (MODE == RADIAL_FREQUENCY_HISTORY) {
         color = vec4(frequencySlow(r), frequency(r), frequencyGlacial(r), 1.0);
-#   elif MODE == ANGULAR_FREQUENCY
+    } else if (MODE == ANGULAR_FREQUENCY) {
         color = vec4(0, frequency(a), 0, 1.0);
-#   elif MODE == ANGULAR_WAVEFORM
+    } else if (MODE == ANGULAR_WAVEFORM) {
         color = vec4(0, waveform(a), 0, 1.0);
-#   elif MODE == ANGULAR_WAVEFORM_SYMMETRY
+    } else if (MODE == ANGULAR_WAVEFORM_SYMMETRY) {
         color = vec4(0, waveform(abs(a*2.0-1.0)), 0, 1.0);
-#   elif MODE == ANGULAR_WAVEFORM_RADIAL_FREQUENCY
+    } else if (MODE == ANGULAR_WAVEFORM_RADIAL_FREQUENCY) {
         color = vec4(0, waveform(abs(a*2.0 - 1.0)) * frequency(r), 0, 1.0) * 2.0;
-#   elif MODE == EXPERIMENTAL
-        
+    } else if (MODE == SPIRAL_FREQUENCY) {        
         color = vec4(0, frequency(fract(r + a)), 0, 1.0) * 2.0;
-#   endif
+    } else if (MODE == SPIRAL_FREQUENCY_HISTORY) {       
+    	color = vec4(0, frequency(historyA, time), 0, 1.0) * 2.0;
+    } else if (MODE == ANGULAR_WAVEFORM_SPIRAL_FREQUENCY_HISTORY) {
+        color = vec4(0, waveform(abs(a*2.0 - 1.0)) * frequency(historyA, time), 0, 1.0) * 2.0;
+    } 
 
     vec4 black = vec4(0.0, 0.0, 0.0, 1.0);
     fragColor = mix(color, black, smoothstep(0.99, 1.0, radius));
